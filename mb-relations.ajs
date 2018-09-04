@@ -1,0 +1,84 @@
+ // Load MyExcel and JSZip JS file
+load(__DIR__ + "lib/jszip-101.js");
+load(__DIR__ + "lib/myexcel.js");
+
+// Given an archimate model , produce a matrix as an excel shhets that lists
+// all relationships for a given relationship type
+// between source object of a given type
+// and a target object of a given type
+// Michel Bénard, 2018
+
+//example 1
+// extract data flows from Model
+// does not take into account data flows where data is modeled as a data object
+// connected to a flow relationship between two application components
+var sheet = fillSheet("application-component","application-component","flow-relationship","Data flows");
+outputFilename=("C:/archimate_flows.xlsx");
+saveSheet(sheet,outputFilename);
+
+//example 2  : list of business processes relazing business services
+var sheet2  = fillSheet("business-process","business-service","realization-relationship","Business realization");
+outputFilename=("C:/archimate_realizations.xlsx");
+saveSheet(sheet2,outputFilename);
+
+//--------------------------
+ function fillSheet(sourceType,targetType,relationshipType,tabName)
+ // sheet : xls Object
+ // sourceType : archimate element type for relationship source
+ //targetType : archimate element type for relation target
+ // relationshipType between source and target
+ // tabName : tab name in excel object
+ {
+   var sheet = $JExcel.new("Calibri 12 #333333");
+   sheet.set( { sheet:0, value:tabName } );
+
+    // sheets.add("Sheet 0");
+     headers = fillColumns(sheet,sourceType,targetType,relationshipType);
+     fillRows(sheet,sourceType,targetType,relationshipType);
+  return sheet;
+ }
+//--------------------------
+function fillColumns(sheet,sourceType,targetType,relationType)
+// see above for arguments
+// construct the headers of the excel sheet
+{
+    var formatHeader = sheet.addStyle ({
+        fill: "#dddddd",
+        border: "thin, thin, thin, thin #555555",
+        font: "Calibri 12 #000000 B",
+    });
+
+    var headers = [" source " + sourceType,"relationship type","relationship name", "target "+ targetType];
+
+        for(var i = 0; i < headers.length; i++) {
+            sheet.set(0, i, 0, headers[i], formatHeader);
+            sheet.set(0, i, undefined, "auto"); // column width is auto
+        }
+  return headers;
+}
+//--------------------------
+function fillRows(sheet,sourceType,targetType,relationshipType)
+// see above for arguments
+// construct each row
+{
+  var current_row = 1;
+
+  $("relationship").forEach(function(e)
+  {
+      if (e.type==relationshipType && e.source.type==sourceType && e.target.type == targetType)
+      {
+        sheet.set(0,0,current_row,e.source.name);
+        sheet.set(0,1,current_row,relationshipType);
+        sheet.set(0,2,current_row,e.name);
+        sheet.set(0,3,current_row,e.target.name);
+        current_row++;
+      }
+  }
+  );
+}
+//--------------------------
+function saveSheet(sheet,outputFilename)
+{
+// TODO add error checking
+sheet.generate(outputFilename);
+}
